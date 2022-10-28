@@ -33,7 +33,6 @@ router.post('/create', isUser(), async (req, res) => {
         console.log(err);
         const errors = parseError(err);
 
-        // TODO add error display to actual template from assignment
         res.render('create', {
             errors,
             // data: { username: req.body.username },
@@ -43,21 +42,76 @@ router.post('/create', isUser(), async (req, res) => {
 });
 
 router.get('/details/:id', isUser(), async (req, res) => {
-    console.log(req.user?._id);
     const play = await playService.getModelAndUsers(req.params.id);
 
     if (req.user?._id == play.owner._id) {
-        console.log('GOTCHA!!!');
         play.isAuthor = true;
     }
-
-    console.log(play);
 
     res.render('details', { ...play });
 });
 
+router.get('/edit/:id', isUser(), async (req, res) => {
+    const play = await playService.getModelAndUsers(req.params.id);
+
+    if (req.user?._id != play.owner._id) {
+        res.clearCookie('token');
+        res.redirect('/auth/login');
+    }
+
+    res.render('edit', { ...play });
+});
+
+router.post('/edit/:id', isUser(), async (req, res) => {
+    try {
+        const { title, description, imageUrl, ...rest } = req.body;
+
+        if (title == '' || description == '' || imageUrl == '') {
+            throw new Error('All fields are required!');
+        }
+
+        const play = await playService.getModelAndUsers(req.params.id);
+
+        if (req.user?._id != play.owner._id) {
+            res.clearCookie('token');
+            res.redirect('/auth/login');
+        }
+
+        if (req.body.isPublic) {
+            req.body.isPublic = true;
+        } else {
+            req.body.isPublic = false;
+        }
+
+        await playService.update(req.params.id, req.body);
+
+        res.redirect('/');
+    } catch (err) {
+        console.log(err);
+        const errors = parseError(err);
+
+        res.render('edit', { errors, ...req.body, _id: req.params.id });
+
+    }
+});
 
 
+router.get('/delete/:id', isUser(), async (req, res) => {
+    const play = await playService.getModelAndUsers(req.params.id);
+
+    if (req.user?._id != play.owner._id) {
+        res.clearCookie('token');
+        res.redirect('/auth/login');
+    }
+
+    try {
+        await playService.del(req.params.id);
+
+        res.redirect('/');
+    } catch (err) {
+        console.log(err);
+    }
+});
 
 module.exports = router;
 

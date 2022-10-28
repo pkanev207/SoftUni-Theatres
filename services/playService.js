@@ -1,6 +1,5 @@
-// TODO replace with actual model
 const Play = require('../models/Play');
-// const User = require('../models/User');
+const User = require('../models/User');
 
 async function getAll() {
     return Play.find({}).lean();
@@ -23,14 +22,18 @@ async function create(obj) {
 }
 
 async function update(id, obj) {
-    // TODO replace with actual fields
     const existing = await Play.findById(id);
-    existing.something = obj.something;
+
+    existing.title = obj.title;
+    existing.description = obj.description;
+    existing.imageUrl = obj.imageUrl;
+    existing.isPublic = obj.isPublic;
 
     await existing.save();
 }
 
 async function del(id) {
+    console.log('fuck');
     await Play.findByIdAndDelete(id);
 }
 
