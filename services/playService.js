@@ -40,6 +40,11 @@ async function getAllSortedByDate() {
     return await Play.find({}).sort({ createdAt: 1 }).lean();
 }
 
+async function getAllSortedByLikes() {
+    // db.question.find().sort({"answers":-1}).limit(5).pretty();
+    return await Play.find().sort({ "likes": -1 }).limit(3).lean();
+}
+
 // for joining two models
 // async function createTrip(trip) {
 //     const result = new Trip(trip);
@@ -86,4 +91,5 @@ module.exports = {
     del,
     getAllSortedByDate,
     vote,
+    getAllSortedByLikes
 };
