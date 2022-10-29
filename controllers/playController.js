@@ -3,7 +3,7 @@ const router = require('express').Router();
 const playService = require('../services/playService');
 const { parseError } = require('../util/errorParser');
 
-const { isUser, isGuest } = require('../middleware/guards');
+const { isUser } = require('../middleware/guards');
 
 router.get('/create', isUser(), (req, res) => {
     res.render('create');
@@ -48,6 +48,10 @@ router.get('/details/:id', isUser(), async (req, res) => {
         play.isAuthor = true;
     }
 
+    play.hasVoted = play.likes
+        .map(x => x.toString())
+        .includes(req.user._id);
+
     res.render('details', { ...play });
 });
 
@@ -89,9 +93,7 @@ router.post('/edit/:id', isUser(), async (req, res) => {
     } catch (err) {
         console.log(err);
         const errors = parseError(err);
-
         res.render('edit', { errors, ...req.body, _id: req.params.id });
-
     }
 });
 
@@ -110,6 +112,28 @@ router.get('/delete/:id', isUser(), async (req, res) => {
         res.redirect('/');
     } catch (err) {
         console.log(err);
+    }
+});
+
+
+router.get('/like/:id', isUser(), async (req, res) => {
+    const play = await playService.getById(req.params.id);
+
+    try {
+        if (req.user?._id == play.owner) {
+            res.clearCookie('token');
+            res.redirect('/auth/login');
+        }
+
+        await playService.vote(req.user._id, play._id);
+        play.hasVoted = true;
+        play.isAuthor = false;
+
+        res.render('details', { ...play });
+    } catch (err) {
+        console.log(err);
+        const errors = parseError(err);
+        res.render('details', { errors, ...play });
     }
 });
 

@@ -33,7 +33,6 @@ async function update(id, obj) {
 }
 
 async function del(id) {
-    console.log('fuck');
     await Play.findByIdAndDelete(id);
 }
 
@@ -53,6 +52,31 @@ async function getAllSortedByDate() {
 //     return result;
 // }
 
+async function vote(userId, objId) {
+    const play = await Play.findById(objId);
+    const user = await User.findById(userId);
+
+    if (play.likes.includes(userId)) {
+        throw new Error('User already has voted!');
+    }
+
+    if (user.plays.includes(objId)) {
+        throw new Error('User has already voted!');
+    }
+
+    if (play.owner == user._id) {
+        throw new Error('The user is the owner of the play and therefore can NOT vote!!!');
+    }
+
+    play.likes.push(userId);
+    await play.save();
+
+    user.plays.push(objId);
+    await user.save();
+
+    return;
+}
+
 module.exports = {
     getAll,
     getById,
@@ -60,5 +84,6 @@ module.exports = {
     create,
     update,
     del,
-    getAllSortedByDate
+    getAllSortedByDate,
+    vote,
 };
